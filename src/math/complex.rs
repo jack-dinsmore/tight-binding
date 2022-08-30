@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
+use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign, Div, DivAssign};
 pub struct Complex {
     r: f64,
     i: f64,
@@ -19,6 +19,9 @@ impl Complex {
     }
     pub fn norm(&self) -> f64 {
         self.r * self.r + self.i * self.i
+    }
+    pub fn new(r: f64, i: f64) -> Self {
+        Self {r, i}
     }
 }
 
@@ -93,5 +96,23 @@ impl MulAssign<f64> for Complex {
     fn mul_assign(&mut self, other: f64) {
         self.r *= other;
         self.i *= other;
+    }
+}
+
+impl Div<f64> for Complex {
+    type Output = Self;
+
+    fn div(self, other: f64) -> Self {
+        Self {
+            r: self.r / other,
+            i: self.i / other,
+        }
+    }
+}
+
+impl DivAssign<f64> for Complex {
+    fn div_assign(&mut self, other: f64) {
+        self.r /= other;
+        self.i /= other;
     }
 }

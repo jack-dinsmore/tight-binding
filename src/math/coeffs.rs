@@ -79,15 +79,15 @@ pub fn make_s<const PROTONS: usize, const N_MAX: usize>(layout: &ProtonLayout<PR
             for n in 1..N_MAX {
                 for l in 0..n {
                     for m in (-(l as isize))..(l+1) as isize {
-                        let wf = nlm(n, l, m);
+                        let wf = nlm(n as u32, l as u32, m as i32);
                         for np in 1..N_MAX {
                             for lp in 0..np {
                                 for mp in (-(lp as isize))..(lp+1) as isize {
-                                    let wfp = nlm(np, lp, mp);
+                                    let wfp = nlm(np as u32, lp as u32, mp as i32);
                                     let key = (a as u32, ap as u32, n as u32, l as u32, m as u32, np as u32, lp as u32, mp as u32);
                                     if map.contains_key(&key) {continue;}
                                     let value = integrate(|r: (f64, f64, f64)| {
-                                        wf(r) * wfp(add(sub(r, layout.pos(a)), layout.pos(ap)))
+                                        wf(r) * wfp(add(sub(r, layout.pos(a)), layout.pos(ap))).conj()
                                     });
                                     map.insert(key, value);
                                 }
@@ -103,33 +103,44 @@ pub fn make_s<const PROTONS: usize, const N_MAX: usize>(layout: &ProtonLayout<PR
 
 pub fn make_q<const PROTONS: usize, const N_MAX: usize>(layout: &ProtonLayout<PROTONS>) -> HashMap<(u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32), Complex> {
     let mut hmap = HashMap::new();
-    for na in 1..N_MAX {
-        for la in 0..na {
-            for ma in (-(la as isize))..(la+1) as isize {
-                let wfa = nlm(na as u32, la as u32, ma as u32);
-                for nap in 1..N_MAX {
-                    for lap in 0..nap {
-                        for map in (-(lap as isize))..(lap+1) as isize {
-                            let wfap = nlm(nap as u32, lap as u32, map as u32);
-                            for nb in 1..N_MAX {
-                                for lb in 0..nb {
-                                    for mb in (-(lb as isize))..(lb+1) as isize {
-                                        let wfb = nlm(nb as u32, lb as u32, mb as u32);
-                                        for nbp in 1..N_MAX {
-                                            for lbp in 0..nbp {
-                                                for mbp in (-(lbp as isize))..(lbp+1) as isize {
-                                                    let wfbp = nlm(nbp as u32, lbp as u32, mbp as u32);
-                                                    let key = (na as u32, la as u32, ma as u32, nap as u32, lap as u32, map as u32,
-                                                               nb as u32, lb as u32, mb as u32, nbp as u32, lbp as u32, mbp as u32);
-                                                    if hmap.contains_key(&key) {continue;}
-                                                    let value = integrate(|ra: (f64, f64, f64)| {
-                                                        let ra_scale = ;
-                                                        integrate(|rb:(f64, f64, f64)| {
-                                                            let rb_scale = ;
-                                                            wfa(ra) * wfap(ra) * wfb(rb) * wfbp(rb) * 1 / norm(sub(ra_scale, rb_scale))
-                                                        })
-                                                    });
-                                                    hmap.insert(key, value);
+
+    for aa in 0..PROTONS {
+        for aap in 0..PROTONS {
+            for ab in 0..PROTONS {
+                for abp in 0..PROTONS {
+                    for na in 1..N_MAX {
+                        for la in 0..na {
+                            for ma in (-(la as isize))..(la+1) as isize {
+                                let wfa = nlm(na as u32, la as u32, ma as i32);
+                                for nap in 1..N_MAX {
+                                    for lap in 0..nap {
+                                        for map in (-(lap as isize))..(lap+1) as isize {
+                                            let wfap = nlm(nap as u32, lap as u32, map as i32);
+                                            for nb in 1..N_MAX {
+                                                for lb in 0..nb {
+                                                    for mb in (-(lb as isize))..(lb+1) as isize {
+                                                        let wfb = nlm(nb as u32, lb as u32, mb as i32);
+                                                        for nbp in 1..N_MAX {
+                                                            for lbp in 0..nbp {
+                                                                for mbp in (-(lbp as isize))..(lbp+1) as isize {
+                                                                    let wfbp = nlm(nbp as u32, lbp as u32, mbp as i32);
+                                                                    let key = (na as u32, la as u32, ma as u32, nap as u32, lap as u32, map as u32,
+                                                                            nb as u32, lb as u32, mb as u32, nbp as u32, lbp as u32, mbp as u32);
+                                                                    if hmap.contains_key(&key) {continue;}
+                                                                    let value = integrate(|ra: (f64, f64, f64)| {
+                                                                        let ra_scale = add(ra, add(layout.pos(aa), layout.pos(aap)));
+                                                                        let ra_trans = add(ra, sub(layout.pos(aa), layout.pos(aap)));
+                                                                        let rb_trans = add(ra, sub(layout.pos(ab), layout.pos(abp)));
+                                                                        integrate(|rb:(f64, f64, f64)| {
+                                                                            let rb_scale = add(rb, add(layout.pos(ab), layout.pos(abp)));
+                                                                            wfa(ra_trans) * wfap(ra).conj() * wfb(rb_trans) * wfbp(rb).conj() * 1.0 / norm(sub(ra_scale, rb_scale))
+                                                                        })
+                                                                    });
+                                                                    hmap.insert(key, value);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
